@@ -21,3 +21,13 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/image/circle.png
+    - assets/image/bomba.png
+    - assets/image/cle.png
+    - assets/image/triangle.png
+    - assets/image/play.png
+    - assets/image/cup.png
+    - assets/image/1.png
+    - assets/image/2.png
+    - assets/image/3.png
