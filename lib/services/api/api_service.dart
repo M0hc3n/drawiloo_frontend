@@ -6,7 +6,8 @@ class ApiService {
   static const String baseUrl =
       'http://127.0.0.1:5000'; // Replace with your API endpoint
 
-  static Future<Map<String, dynamic>> sendDrawing(List<int> imageBytes) async {
+  static Future<Map<String, dynamic>> sendDrawing(
+      List<int> imageBytes, String prompt) async {
     try {
       // Convert image bytes to base64
       String base64Image = base64Encode(imageBytes);
@@ -15,6 +16,7 @@ class ApiService {
 
       final body = jsonEncode({
         'image': base64Image,
+        'prompt': prompt,
         'timestamp': DateTime.now().toIso8601String(),
       });
 
@@ -47,6 +49,32 @@ class ApiService {
       }
     } catch (e) {
       return "Error fetching data";
+    }
+  }
+
+  static Future<int> getProficiencyPoint(int time, String confidence) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/update_proficiency'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'time': time,
+          'confidence': confidence,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        return responseData['action'] as int;
+      } else {
+        throw Exception(
+            'Failed to get proficiency points: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error calculating proficiency points: $e');
     }
   }
 }

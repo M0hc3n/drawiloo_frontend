@@ -35,7 +35,7 @@ class _GameScreenState extends State<GameScreen> {
   Timer? _captureTimer;
   bool _isSending = false;
   String? _lastPrediction;
-  double? _confidence;
+  String? _confidence;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
   String? _winnerId;
@@ -92,27 +92,34 @@ class _GameScreenState extends State<GameScreen> {
     if (_gameEnded) return;
 
     try {
-      final response = await ApiService.sendDrawing(imageBytes);
+      final response = await ApiService.sendDrawing(imageBytes, widget.prompt);
       setState(() {
         _lastPrediction = response['correct_label'];
         _confidence = response['confidence'];
       });
 
       // Assuming API returns something like {'success': true, 'confidence': 0.95, correct_label}
-      bool isCorrect = response['success'] == true &&
-          response['confidence'] != null &&
-          (response['confidence'] as double) >=
-              0.8; // Adjust threshold as needed
+      bool isCorrect = response['success'] == true;
 
       if (isCorrect) {
         setState(() {
           _gameEnded = true;
         });
+        await updateProficiency();
         await _handleGameEnd();
       }
     } catch (e) {
       _showError('Error sending to API: $e');
     }
+  }
+
+  Future<void> updateProficiency() async {
+    final proficiencyResponse = await ApiService.getProficiencyPoint(
+        _elapsedSeconds, _confidence ?? "0.5");
+
+    final response = await Supabase.instance.client.from('user_info').update({
+      'points': proficiencyResponse,
+    }).eq('user_id', Supabase.instance.client.auth.currentUser?.id as Object);
   }
 
   Future<void> _handleGameEnd() async {
@@ -122,8 +129,6 @@ class _GameScreenState extends State<GameScreen> {
         .select('winner_id')
         .eq('id', widget.gameId)
         .single();
-
-    print(response);
 
     if (response.isNotEmpty && response['winner_id'] != null) {
       setState(() {
@@ -159,6 +164,8 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Future<void> _handleTimeOut() async {
+    await updateProficiency();
+
     setState(() {
       _gameEnded = true;
     });

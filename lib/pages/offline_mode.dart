@@ -8,6 +8,7 @@ import 'package:drawiloo/widgets/game/timer.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:drawiloo/services/api/api_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OfflineMode extends StatefulWidget {
   const OfflineMode({super.key});
@@ -22,11 +23,12 @@ class _OfflineModeState extends State<OfflineMode> {
   final GlobalKey canvasKey = GlobalKey();
   double strokeWidth = 5;
   String prompt = "Draw a cat"; // This will come from database
-  int timeLeft = 60; // 60 seconds timer
+  int timeLeft = 20; // 20 seconds timer
   Timer? _captureTimer;
   bool _isSending = false;
   String? _lastPrediction;
-  double? _confidence;
+  String? _confidence;
+  double? _points;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
   String recommendedLabel = '';
@@ -90,27 +92,37 @@ class _OfflineModeState extends State<OfflineMode> {
     if (_gameEnded) return;
 
     try {
-      final response = await ApiService.sendDrawing(imageBytes);
+      final response = await ApiService.sendDrawing(
+        imageBytes,
+        recommendedLabel,
+      );
+
       setState(() {
         _lastPrediction = response['correct_label'];
         _confidence = response['confidence'];
       });
 
-      // Assuming API returns something like {'success': true, 'confidence': 0.95, correct_label}
-      bool isCorrect = response['success'] == true &&
-          response['confidence'] != null &&
-          (response['confidence'] as double) >=
-              0.8; // Adjust threshold as needed
+      bool isCorrect = response['success'] == true;
 
       if (isCorrect) {
         setState(() {
           _gameEnded = true;
         });
+        await updateProficiency();
         await _handleSuccess();
       }
     } catch (e) {
       _showError('Error sending to API: $e');
     }
+  }
+
+  Future<void> updateProficiency() async {
+    final proficiencyResponse = await ApiService.getProficiencyPoint(
+        _elapsedSeconds, _confidence ?? "0.5");
+
+    final response = await Supabase.instance.client.from('user_info').update({
+      'points': proficiencyResponse,
+    }).eq('user_id', Supabase.instance.client.auth.currentUser?.id as Object);
   }
 
   Future<void> _handleSuccess() async {
@@ -124,6 +136,8 @@ class _OfflineModeState extends State<OfflineMode> {
   }
 
   Future<void> _handleTimeOut() async {
+    await updateProficiency();
+
     setState(() {
       _gameEnded = true;
     });
@@ -160,10 +174,10 @@ class _OfflineModeState extends State<OfflineMode> {
     return Scaffold(
       appBar: AppBar(
         title: GameTimer(
-          totalSeconds: 60,
-          size: 60,
+          totalSeconds: 20,
+          size: 20,
           onTimerUpdate: (seconds) {
-            _elapsedSeconds = 60 - seconds;
+            _elapsedSeconds = 20 - seconds;
           },
           onTimerComplete: () {
             if (!_gameEnded) {
