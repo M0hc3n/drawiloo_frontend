@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:drawiloo/services/api/api_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:html' as html;
 
 class OfflineMode extends StatefulWidget {
   const OfflineMode({super.key});
@@ -28,7 +29,6 @@ class _OfflineModeState extends State<OfflineMode> {
   bool _isSending = false;
   String? _lastPrediction;
   String? _confidence;
-  double? _points;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
   String recommendedLabel = '';
@@ -76,6 +76,7 @@ class _OfflineModeState extends State<OfflineMode> {
 
         if (byteData != null) {
           List<int> pngBytes = byteData.buffer.asUint8List();
+
           await _sendDrawingToApi(pngBytes);
         }
       }
@@ -171,6 +172,7 @@ class _OfflineModeState extends State<OfflineMode> {
 
   @override
   Widget build(BuildContext context) {
+    print(drawingPoints.toString());
     return Scaffold(
       appBar: AppBar(
         title: GameTimer(
@@ -207,47 +209,57 @@ class _OfflineModeState extends State<OfflineMode> {
       ),
       body: Stack(
         children: [
-          RepaintBoundary(
-            key: canvasKey,
-            child: GestureDetector(
-              onPanStart: (details) {
-                setState(() {
-                  drawingPoints.add(
-                    DrawingPoint(
-                      details.localPosition,
-                      Paint()
-                        ..color = selectedColor
-                        ..isAntiAlias = true
-                        ..strokeWidth = strokeWidth
-                        ..strokeCap = StrokeCap.round,
+          Center(
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black, width: 3),
+                color: Colors.white,
+              ),
+              child: RepaintBoundary(
+                key: canvasKey,
+                child: GestureDetector(
+                  onPanStart: (details) {
+                    setState(() {
+                      drawingPoints.add(
+                        DrawingPoint(
+                          details.localPosition,
+                          Paint()
+                            ..color = selectedColor
+                            ..isAntiAlias = true
+                            ..strokeWidth = strokeWidth
+                            ..strokeCap = StrokeCap.round,
+                        ),
+                      );
+                    });
+                  },
+                  onPanUpdate: (details) {
+                    setState(() {
+                      drawingPoints.add(
+                        DrawingPoint(
+                          details.localPosition,
+                          Paint()
+                            ..color = selectedColor
+                            ..isAntiAlias = true
+                            ..strokeWidth = strokeWidth
+                            ..strokeCap = StrokeCap.round,
+                        ),
+                      );
+                    });
+                  },
+                  onPanEnd: (details) {
+                    setState(() {
+                      drawingPoints.add(null);
+                    });
+                  },
+                  child: CustomPaint(
+                    painter: _DrawingPainter(drawingPoints),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height,
+                      width: MediaQuery.of(context).size.width,
                     ),
-                  );
-                });
-              },
-              onPanUpdate: (details) {
-                setState(() {
-                  drawingPoints.add(
-                    DrawingPoint(
-                      details.localPosition,
-                      Paint()
-                        ..color = selectedColor
-                        ..isAntiAlias = true
-                        ..strokeWidth = strokeWidth
-                        ..strokeCap = StrokeCap.round,
-                    ),
-                  );
-                });
-              },
-              onPanEnd: (details) {
-                setState(() {
-                  drawingPoints.add(null);
-                });
-              },
-              child: CustomPaint(
-                painter: _DrawingPainter(drawingPoints),
-                child: Container(
-                  height: MediaQuery.of(context).size.height,
-                  width: MediaQuery.of(context).size.width,
+                  ),
                 ),
               ),
             ),

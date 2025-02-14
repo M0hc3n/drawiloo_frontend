@@ -1,6 +1,7 @@
 // services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 class ApiService {
   static const String baseUrl =
@@ -10,27 +11,19 @@ class ApiService {
       List<int> imageBytes, String prompt) async {
     try {
       // Convert image bytes to base64
-      String base64Image = base64Encode(imageBytes);
-
-      // Create request body
-
-      final body = jsonEncode({
-        'image': base64Image,
+      FormData formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(imageBytes, filename: 'drawing.png'),
         'prompt': prompt,
         'timestamp': DateTime.now().toIso8601String(),
       });
 
-      // Send POST request
-      final response = await http.post(
-        Uri.parse('$baseUrl/display_image'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: body,
+      final response = await Dio().post(
+        '$baseUrl/predict_drawing',
+        data: formData,
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return jsonDecode(response.data);
       } else {
         throw Exception('Failed to process drawing: ${response.statusCode}');
       }
