@@ -13,10 +13,26 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> signIn() async {
     try {
-      await Supabase.instance.client.auth.signInWithPassword(
+      final response = await Supabase.instance.client.auth.signInWithPassword(
         email: emailController.text,
         password: passwordController.text,
       );
+
+      if (response.user != null) {
+        final userId = response.user!.id;
+        final userInfoResponse = await Supabase.instance.client
+            .from('user_info')
+            .select()
+            .eq('user_id', userId);
+
+        if (userInfoResponse.isEmpty) {
+          await Supabase.instance.client.from('user_info').insert({
+            'user_id': userId,
+            'points': 0,
+            'games': 0,
+          });
+        }
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => MainMenu()),

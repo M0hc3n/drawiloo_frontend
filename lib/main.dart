@@ -60,7 +60,8 @@ class MainMenu extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildMenuButton(context, 'Offline Mode', OfflineMode()),
-            _buildMenuButton(context, 'Online Mode', OnlineMode()),
+            _buildMenuButton(
+                context, 'Online Mode', OnlineModeMatchMakingScreen()),
             _buildMenuButton(context, 'Room Mode', RoomMode()),
           ],
         ),
