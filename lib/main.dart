@@ -13,6 +13,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // P.S: ik this is super bad, but I did it on a rush
+  // please note that no sensitive data was stored under those creds, and this project
+  // will be automatically deleted after the hackathon by 1 or 2 days at max.
   await Supabase.initialize(
     url: 'https://kmnrtirsjumujwebkiun.supabase.co',
     anonKey:
@@ -25,7 +28,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
-    return MainMenu();
+    return user == null ? LoginPage() : MainMenu();
   }
 }
 
@@ -34,7 +37,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AuthGate(),
+      home: AnimatedSplashScreen(),
     );
   }
 }
