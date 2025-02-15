@@ -1,8 +1,10 @@
 import 'package:drawiloo/pages/login_page.dart';
+import 'package:drawiloo/pages/multiplayer_selection_mode.dart';
 import 'package:drawiloo/pages/offline_mode.dart';
 import 'package:drawiloo/pages/online_mode.dart';
 import 'package:drawiloo/pages/profile_page.dart';
 import 'package:drawiloo/pages/room_mode.dart';
+import 'package:drawiloo/pages/splashScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,13 +18,6 @@ void main() async {
   runApp(MyApp());
 }
 
-/*class AuthGate extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    return user == null ? LoginPage() : MainMenu();
-  }
-}*/
 class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -40,7 +35,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MainMenu(),
+      home: AuthGate(),
     );
   }
 }
@@ -149,8 +144,8 @@ class MainMenu extends StatelessWidget {
                 _buildCustomButton(context, 'Online Mode',
                     OnlineModeMatchMakingScreen(), 'assets/image/bomba.png'),
                 SizedBox(height: 35),
-                _buildCustomButton(
-                    context, 'Room Mode', RoomMode(), 'assets/image/cle.png'),
+                _buildCustomButton(context, 'Room Mode',
+                    MultiplayerSelectionMode(), 'assets/image/cle.png'),
               ],
             ),
 

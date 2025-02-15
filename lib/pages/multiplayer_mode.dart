@@ -1,12 +1,10 @@
 import 'dart:async';
 
-import 'package:drawiloo/pages/game_screen.dart';
 import 'package:drawiloo/pages/multiplayer_game_main_screen.dart';
 import 'package:drawiloo/pages/multiplayer_list_games_screen.dart';
 import 'package:drawiloo/services/api/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:math';
 
 class MultiplayerModeScreen extends StatefulWidget {
   final bool isAdmin;
@@ -33,8 +31,6 @@ class _MultiplayerModeScreenState extends State<MultiplayerModeScreen> {
     } else {
       findMatch();
     }
-
-    // findOpponent();
   }
 
   @override

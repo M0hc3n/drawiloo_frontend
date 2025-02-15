@@ -2,7 +2,7 @@ import 'package:drawiloo/pages/multiplayer_mode.dart';
 import 'package:drawiloo/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 
-class MultiplyaerSelectionMode extends StatelessWidget {
+class MultiplayerSelectionMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

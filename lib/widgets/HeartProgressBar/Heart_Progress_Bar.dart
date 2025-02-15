@@ -3,8 +3,13 @@ import 'dart:async';
 
 class HeartProgressBar extends StatefulWidget {
   final int duration;
+  final VoidCallback onTimerComplete;
 
-  const HeartProgressBar({Key? key, required this.duration}) : super(key: key);
+  const HeartProgressBar({
+    Key? key,
+    required this.duration,
+    required this.onTimerComplete,
+  }) : super(key: key);
 
   @override
   State<HeartProgressBar> createState() => _HeartProgressBarState();
@@ -36,6 +41,9 @@ class _HeartProgressBarState extends State<HeartProgressBar> {
           timeLeft--;
           progress = timeLeft / duration;
         });
+        if (timeLeft == 0) {
+          widget.onTimerComplete();
+        }
       } else {
         timer.cancel();
         if (duration == 15) {

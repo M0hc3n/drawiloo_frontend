@@ -27,7 +27,7 @@ class _OfflineModeState extends State<OfflineMode> {
   bool _isSending = false;
   String? _lastPrediction;
   String? _confidence;
-  double? _points;
+  int currPoints = 0;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
   String recommendedLabel = '';
@@ -36,6 +36,7 @@ class _OfflineModeState extends State<OfflineMode> {
   // New state variable for button border colors
   Color _playButtonBorderColor = Colors.black; // Default border color
   Color _leadButtonBorderColor = Colors.black; // Default border color
+  final SupabaseClient supabase = Supabase.instance.client;
 
   @override
   void initState() {
@@ -43,12 +44,33 @@ class _OfflineModeState extends State<OfflineMode> {
     _startPeriodicCapture();
     startTimer();
     fetchLabel();
+
+    fetchUserPoints();
   }
 
   @override
   void dispose() {
     _captureTimer?.cancel();
     super.dispose();
+  }
+
+  void fetchUserPoints() async {
+    final user = supabase.auth.currentUser;
+    final userProfile = await supabase
+        .from('user_info')
+        .select('points')
+        .eq('user_id', user?.id as String)
+        .select('*')
+        .single();
+
+    if (userProfile.isEmpty) {
+      return;
+    }
+    int userPoints = userProfile['points'] as int;
+
+    setState(() {
+      currPoints = userPoints;
+    });
   }
 
   void _startPeriodicCapture() {
@@ -122,9 +144,12 @@ class _OfflineModeState extends State<OfflineMode> {
 
   Future<void> updateProficiency() async {
     final proficiencyResponse = await ApiService.getProficiencyPoint(
-        _elapsedSeconds, _confidence ?? "0.5");
+      _elapsedSeconds,
+      _confidence ?? "0.5",
+      currPoints,
+    );
 
-    final response = await Supabase.instance.client.from('user_info').update({
+    await Supabase.instance.client.from('user_info').update({
       'points': proficiencyResponse,
     }).eq('user_id', Supabase.instance.client.auth.currentUser?.id as Object);
   }
@@ -315,7 +340,7 @@ class _OfflineModeState extends State<OfflineMode> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'I guess its a \n pen.',
+                        'I guess its a \n ${_lastPrediction ?? '...'}.',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
@@ -448,7 +473,12 @@ class _OfflineModeState extends State<OfflineMode> {
               left: 0,
               right: 0,
               child: Center(
-                child: HeartProgressBar(duration: timeLeft),
+                child: HeartProgressBar(
+                  duration: timeLeft,
+                  onTimerComplete: () {
+                    _handleTimeOut();
+                  },
+                ),
               ),
             ),
           ],
