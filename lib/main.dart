@@ -1,4 +1,3 @@
-import 'package:drawiloo/pages/leader_board.dart';
 import 'package:drawiloo/pages/login_page.dart';
 import 'package:drawiloo/pages/offline_mode.dart';
 import 'package:drawiloo/pages/online_mode.dart';
@@ -28,7 +27,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
-    return LeaderboardScreen();
+    return user == null ? LoginPage() : MainMenu();
   }
 }
 
@@ -41,7 +40,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: AuthGate(),
+      home: MainMenu(),
     );
   }
 }

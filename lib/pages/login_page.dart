@@ -48,25 +48,141 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(title: Text('Login')),
       body: Padding(
-        padding: EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: signIn,
-              child: Text('Login'),
-            ),
-          ],
+        padding: EdgeInsets.symmetric(horizontal: 25.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Pixel Art Icon at the Top
+              Align(
+                alignment: Alignment.topCenter,
+                child: Image.asset(
+                  'assets/image/triangle.png', // Replace with the correct path
+                  height: 200,
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // "Loging" Title
+              Text(
+                "Login",
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'PixelFont', // Ensure this font is available
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // Email Input Field
+              Text(
+                "Email",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  hintText: "Enter your email",
+                  border: UnderlineInputBorder(),
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // Password Input Field
+              Text(
+                "Password",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextField(
+                controller: passwordController,
+                decoration: InputDecoration(
+                  hintText: "Enter your password",
+                  border: UnderlineInputBorder(),
+                  suffixIcon: Icon(Icons.visibility_off),
+                ),
+                obscureText: true,
+              ),
+
+              SizedBox(height: 10),
+
+              // Forgot Password
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {},
+                  child: Text(
+                    "Forgot Password?",
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // Login Button
+              Center(
+                child: ElevatedButton(
+                  onPressed: signIn,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF7A1FA0),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 120, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    "Log In",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'PixelFont',
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // Signup Text
+              Center(
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: "Don't have an account? ",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                        ),
+                      ),
+                      TextSpan(
+                        text: "Singup",
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

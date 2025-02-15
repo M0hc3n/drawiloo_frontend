@@ -456,28 +456,6 @@ class _OfflineModeState extends State<OfflineMode> {
       ),
     );
   }
-
-  Widget _buildColorButton(Color color) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedColor = color;
-        });
-      },
-      child: Container(
-        height: 40,
-        width: 40,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selectedColor == color ? Colors.blue : Colors.grey,
-            width: 3,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class DrawingPoint {
