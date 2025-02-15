@@ -28,10 +28,11 @@ class _OfflineModeState extends State<OfflineMode> {
   bool _isSending = false;
   String? _lastPrediction;
   String? _confidence;
-  double? _points;
+  int currPoints = 0;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
   String recommendedLabel = '';
+  final SupabaseClient supabase = Supabase.instance.client;
 
   @override
   void initState() {
@@ -39,12 +40,33 @@ class _OfflineModeState extends State<OfflineMode> {
     _startPeriodicCapture();
     startTimer();
     fetchLabel();
+
+    fetchUserPoints();
   }
 
   @override
   void dispose() {
     _captureTimer?.cancel();
     super.dispose();
+  }
+
+  void fetchUserPoints() async {
+    final user = supabase.auth.currentUser;
+    final userProfile = await supabase
+        .from('user_info')
+        .select('points')
+        .eq('user_id', user?.id as String)
+        .select('*')
+        .single();
+
+    if (userProfile.isEmpty) {
+      return;
+    }
+    int userPoints = userProfile['points'] as int;
+
+    setState(() {
+      currPoints = userPoints;
+    });
   }
 
   void _startPeriodicCapture() {
@@ -76,6 +98,7 @@ class _OfflineModeState extends State<OfflineMode> {
 
         if (byteData != null) {
           List<int> pngBytes = byteData.buffer.asUint8List();
+
           await _sendDrawingToApi(pngBytes);
         }
       }
@@ -118,9 +141,12 @@ class _OfflineModeState extends State<OfflineMode> {
 
   Future<void> updateProficiency() async {
     final proficiencyResponse = await ApiService.getProficiencyPoint(
-        _elapsedSeconds, _confidence ?? "0.5");
+      _elapsedSeconds,
+      _confidence ?? "0.5",
+      currPoints,
+    );
 
-    final response = await Supabase.instance.client.from('user_info').update({
+    await Supabase.instance.client.from('user_info').update({
       'points': proficiencyResponse,
     }).eq('user_id', Supabase.instance.client.auth.currentUser?.id as Object);
   }
@@ -207,170 +233,175 @@ class _OfflineModeState extends State<OfflineMode> {
       ),
       body: Stack(
         children: [
-          
-             Column(
-              children: [
-                const SizedBox(height: 150),
-                Center(
-                  child: Container(
-                    height: 350,
-                    width: 300,
-                    decoration: BoxDecoration(
-                      color: Colors.white, // Background color
-                      border: Border.all(
-                        color: Colors.black, // Border color
-                        width: 3, // Border width
-                      ),
-                      borderRadius: BorderRadius.circular(10), // Rounded corners
+          Column(
+            children: [
+              const SizedBox(height: 150),
+              Center(
+                child: Container(
+                  height: 350,
+                  width: 300,
+                  decoration: BoxDecoration(
+                    color: Colors.white, // Background color
+                    border: Border.all(
+                      color: Colors.black, // Border color
+                      width: 3, // Border width
                     ),
-                    child: RepaintBoundary(
-                      key: canvasKey,
-                      child: GestureDetector(
-                        onPanStart: (details) {
-                          setState(() {
-                            drawingPoints.add(
-                              DrawingPoint(
-                                details.localPosition,
-                                Paint()
-                                  ..color = selectedColor
-                                  ..isAntiAlias = true
-                                  ..strokeWidth = strokeWidth
-                                  ..strokeCap = StrokeCap.round,
-                              ),
-                            );
-                          });
-                        },
-                        onPanUpdate: (details) {
-                          setState(() {
-                            drawingPoints.add(
-                              DrawingPoint(
-                                details.localPosition,
-                                Paint()
-                                  ..color = selectedColor
-                                  ..isAntiAlias = true
-                                  ..strokeWidth = strokeWidth
-                                  ..strokeCap = StrokeCap.round,
-                              ),
-                            );
-                          });
-                        },
-                        onPanEnd: (details) {
-                          setState(() {
-                            drawingPoints.add(null);
-                          });
-                        },
-                        child: CustomPaint(
-                          painter: _DrawingPainter(drawingPoints),
-                          child: Container(
-                            height: MediaQuery.of(context).size.height,
-                            width: MediaQuery.of(context).size.width,
-                          ),
+                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                  ),
+                  child: RepaintBoundary(
+                    key: canvasKey,
+                    child: GestureDetector(
+                      onPanStart: (details) {
+                        setState(() {
+                          drawingPoints.add(
+                            DrawingPoint(
+                              details.localPosition,
+                              Paint()
+                                ..color = selectedColor
+                                ..isAntiAlias = true
+                                ..strokeWidth = strokeWidth
+                                ..strokeCap = StrokeCap.round,
+                            ),
+                          );
+                        });
+                      },
+                      onPanUpdate: (details) {
+                        setState(() {
+                          drawingPoints.add(
+                            DrawingPoint(
+                              details.localPosition,
+                              Paint()
+                                ..color = selectedColor
+                                ..isAntiAlias = true
+                                ..strokeWidth = strokeWidth
+                                ..strokeCap = StrokeCap.round,
+                            ),
+                          );
+                        });
+                      },
+                      onPanEnd: (details) {
+                        setState(() {
+                          drawingPoints.add(null);
+                        });
+                      },
+                      child: CustomPaint(
+                        painter: _DrawingPainter(drawingPoints),
+                        child: Container(
+                          height: MediaQuery.of(context).size.height,
+                          width: MediaQuery.of(context).size.width,
                         ),
                       ),
-                      
                     ),
                   ),
                 ),
-                Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                 
-                      Text(
-                        'I guess its a \n pen.',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                     
-                      
-                    
-                  Image.asset(
-                    'assets/image/triangle.png', // Path to your image
-                    width: 150, // Adjust the width
-                    height: 150, // Adjust the height
-                  ),
-                  
-                ],
               ),
-            ),
-           
-               Container(
-              
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'I guess its a \n pen.',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Image.asset(
+                      'assets/image/triangle.png', // Path to your image
+                      width: 150, // Adjust the width
+                      height: 150, // Adjust the height
+                    ),
+                  ],
+                ),
+              ),
+              Container(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Container(
-                padding: EdgeInsets.all(8), // Padding inside the container
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black), // Blue border
-                  borderRadius: BorderRadius.circular(16), // Rounded corners
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min, // Wrap content size
-                  children: [
-                    ElevatedButton.icon(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.white, // White button background
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8), // Rounded button corners
-      side: BorderSide(color: Colors.transparent), // Transparent border
-    ),
-    elevation: 2,
-    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-  ),
-  onPressed: () {
-    // Play button action
-  },
-  icon: Image.asset(
-    'assets/image/play.png', // Replace with your image path
-    width: 24,
-    height: 24,
-    fit: BoxFit.contain, // Ensures the image fits well
-  ),
-  label: Text(
-    "Play",
-    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-  ),
-),
+                      padding:
+                          EdgeInsets.all(8), // Padding inside the container
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black), // Blue border
+                        borderRadius:
+                            BorderRadius.circular(16), // Rounded corners
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min, // Wrap content size
+                        children: [
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.white, // White button background
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    8), // Rounded button corners
+                                side: BorderSide(
+                                    color: Colors
+                                        .transparent), // Transparent border
+                              ),
+                              elevation: 2,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                            ),
+                            onPressed: () {
+                              // Play button action
+                            },
+                            icon: Image.asset(
+                              'assets/image/play.png', // Replace with your image path
+                              width: 24,
+                              height: 24,
+                              fit:
+                                  BoxFit.contain, // Ensures the image fits well
+                            ),
+                            label: Text(
+                              "Play",
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
 
-                    SizedBox(width: 8), // Spacing between buttons
-                    ElevatedButton.icon(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.white, // White button background
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8), // Rounded button corners
-      side: BorderSide(color: Colors.amber), // Amber border
-    ),
-    elevation: 2,
-    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-  ),
-  onPressed: () {
-    // Lead button action
-  },
-  icon: Image.asset(
-    'assets/image/cup.png', // Replace with your image path
-    width: 24,
-    height: 24,
-    fit: BoxFit.contain, // Ensures the image fits well
-  ),
-  label: Text(
-    "Lead",
-    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-  ),
-),
-
+                          SizedBox(width: 8), // Spacing between buttons
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.white, // White button background
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    8), // Rounded button corners
+                                side: BorderSide(
+                                    color: Colors.amber), // Amber border
+                              ),
+                              elevation: 2,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                            ),
+                            onPressed: () {
+                              // Lead button action
+                            },
+                            icon: Image.asset(
+                              'assets/image/cup.png', // Replace with your image path
+                              width: 24,
+                              height: 24,
+                              fit:
+                                  BoxFit.contain, // Ensures the image fits well
+                            ),
+                            label: Text(
+                              "Lead",
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-                  
-                  ],
-                ),
-              ),
-            
-              ],
-            ),
-          
+            ],
+          ),
           Positioned(
             top: 20,
             left: 0,
@@ -413,7 +444,6 @@ class _OfflineModeState extends State<OfflineMode> {
                     ),
                   ],
                 ),
-                 
               ],
             ),
           ),
@@ -451,7 +481,6 @@ class _OfflineModeState extends State<OfflineMode> {
             width: 3,
           ),
         ),
-        
       ),
     );
   }
@@ -462,6 +491,11 @@ class DrawingPoint {
   Paint paint;
 
   DrawingPoint(this.offset, this.paint);
+
+  @override
+  String toString() {
+    return '$offset,$paint';
+  }
 }
 
 class _DrawingPainter extends CustomPainter {

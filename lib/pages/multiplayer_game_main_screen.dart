@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:drawiloo/pages/profile_page.dart';
@@ -9,23 +10,22 @@ import 'dart:async';
 import 'package:drawiloo/services/api/api_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class GameScreen extends StatefulWidget {
+class MultiplayerGameMainScreen extends StatefulWidget {
   final int gameId;
-  final String opponentId;
   final String prompt;
 
-  const GameScreen({
+  const MultiplayerGameMainScreen({
     required this.gameId,
-    required this.opponentId,
     required this.prompt,
     Key? key,
   }) : super(key: key);
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
+  State<MultiplayerGameMainScreen> createState() =>
+      _MultiplayerGameMainScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _MultiplayerGameMainScreenState extends State<MultiplayerGameMainScreen> {
   List<DrawingPoint?> drawingPoints = [];
   Color selectedColor = Colors.black;
   final GlobalKey canvasKey = GlobalKey();
@@ -35,8 +35,8 @@ class _GameScreenState extends State<GameScreen> {
   Timer? _captureTimer;
   bool _isSending = false;
   String? _lastPrediction;
-  int currPoints = 0;
   String? _confidence;
+  int currPoints = 0;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
   String? _winnerId;
@@ -83,6 +83,20 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  Future<void> _broadcastDrawing() async {
+    List<Map<String, dynamic>> serializedPoints = drawingPoints
+        .where((point) => point != null)
+        .map((point) => {
+              'x': point!.offset.dx,
+              'y': point.offset.dy,
+            })
+        .toList();
+
+    await supabase.from('multiplayer_game').update({
+      'drawing_points': jsonEncode(serializedPoints),
+    }).eq('id', widget.gameId);
+  }
+
   Future<void> _captureAndProcessCanvas() async {
     if (_isSending) return; // Prevent multiple concurrent captures
 
@@ -91,6 +105,8 @@ class _GameScreenState extends State<GameScreen> {
     });
 
     try {
+      await _broadcastDrawing();
+
       ui.Image? image = await CanvasCapture.captureCanvas(canvasKey);
 
       if (image != null) {
