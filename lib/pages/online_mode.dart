@@ -57,7 +57,7 @@ class _OnlineModeMatchMakingScreenState
         .maybeSingle();
 
     if (availableMatch != null && availableMatch.isNotEmpty) {
-      String randomPrompt = await ApiService.fetchRecommendedLabel();
+      String randomPrompt = await ApiService.fetchRecommendedLabel(userPoints);
       final res = await supabase.from('matchmaking').update({
         'opponent_id': user?.id,
         'opponent_points': userPoints,

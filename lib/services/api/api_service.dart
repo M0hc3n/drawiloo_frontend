@@ -32,9 +32,10 @@ class ApiService {
     }
   }
 
-  static Future<String> fetchRecommendedLabel() async {
+  static Future<String> fetchRecommendedLabel(int userPoints) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/recommend_label'));
+      final response = await http
+          .get(Uri.parse('$baseUrl/recommend_label?level=$userPoints'));
       if (response.statusCode == 200) {
         return jsonDecode(response.body)['recommended_label'];
       } else {

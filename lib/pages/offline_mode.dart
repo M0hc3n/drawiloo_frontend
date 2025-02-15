@@ -81,7 +81,18 @@ class _OfflineModeState extends State<OfflineMode> {
   }
 
   void fetchLabel() async {
-    String label = await ApiService.fetchRecommendedLabel();
+    final user = supabase.auth.currentUser;
+
+    final userProfile = await supabase
+        .from('user_info')
+        .select('points')
+        .eq('user_id', user?.id as String)
+        .select('*')
+        .single();
+
+    int userPoints = userProfile['points'] as int;
+
+    String label = await ApiService.fetchRecommendedLabel(userPoints);
     setState(() {
       recommendedLabel = label;
     });

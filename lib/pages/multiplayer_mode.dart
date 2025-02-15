@@ -41,7 +41,6 @@ class _MultiplayerModeScreenState extends State<MultiplayerModeScreen> {
 
   void createMatch() async {
     final user = supabase.auth.currentUser;
-    String prompt = await ApiService.fetchRecommendedLabel();
 
     final userProfile = await supabase
         .from('user_info')
@@ -50,13 +49,16 @@ class _MultiplayerModeScreenState extends State<MultiplayerModeScreen> {
         .select('*')
         .single();
 
+    int userPoints = userProfile['points'] as int;
+
+    String prompt = await ApiService.fetchRecommendedLabel(userPoints);
+
     if (userProfile.isEmpty) {
       setState(() {
         status = "Error fetching profile";
       });
       return;
     }
-    int userPoints = userProfile['points'] as int;
 
     final gameRes = await supabase
         .from('multiplayer_game')
