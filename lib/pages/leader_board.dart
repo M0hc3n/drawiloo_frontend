@@ -1,3 +1,4 @@
+import 'package:drawiloo/main.dart';
 import 'package:flutter/material.dart';
 import 'package:drawiloo/widgets/top_bar/Custom_appbar.dart';
 
@@ -72,7 +73,6 @@ class LeaderboardScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      const SizedBox(width: 16),
                       CircleAvatar(
                         radius: 20,
                         backgroundColor: Colors.deepPurple[100],
@@ -127,13 +127,21 @@ class LeaderboardScreen extends StatelessWidget {
                 _buildNavButton(
                   icon: 'assets/image/play.png',
                   label: 'Play',
-                  onPressed: () {},
+                  onPressed: () {
+                    // Navigate to MainMenu
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainMenu()),
+                    );
+                  },
                 ),
                 const SizedBox(width: 8),
                 _buildNavButton(
                   icon: 'assets/image/cup.png',
                   label: 'Lead',
-                  onPressed: () {},
+                  onPressed: () {
+                    // Stay on the Leaderboard screen (no navigation needed)
+                  },
                   isSelected: true,
                 ),
               ],
@@ -143,8 +151,6 @@ class LeaderboardScreen extends StatelessWidget {
       ),
     );
   }
-
-  
 
   Widget _buildNavButton({
     required String icon,

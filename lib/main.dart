@@ -1,3 +1,4 @@
+import 'package:drawiloo/pages/leader_board.dart';
 import 'package:drawiloo/pages/login_page.dart';
 import 'package:drawiloo/pages/multiplayer_selection_mode.dart';
 import 'package:drawiloo/pages/offline_mode.dart';
@@ -5,6 +6,8 @@ import 'package:drawiloo/pages/online_mode.dart';
 import 'package:drawiloo/pages/profile_page.dart';
 import 'package:drawiloo/pages/room_mode.dart';
 import 'package:drawiloo/pages/splashScreen.dart';
+import 'package:drawiloo/widgets/top_bar/Custom_appbar.dart';
+import 'package:drawiloo/widgets/typing_text_wighet/TypingTextWidget%20.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -22,7 +25,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
-    return user == null ? LoginPage() : MainMenu();
+    return MainMenu();
   }
 }
 
@@ -31,109 +34,64 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Drawiloo Challenge',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
       home: AuthGate(),
     );
   }
 }
 
-class MainMenu extends StatelessWidget {
+class MainMenu extends StatefulWidget {
+  @override
+  _MainMenuState createState() => _MainMenuState();
+}
+
+class _MainMenuState extends State<MainMenu> {
+  Color _playButtonBorderColor = Color(0xFF72CB25);
+  Color _leadButtonBorderColor = Colors.black;
+
+  void _handleButtonPress(String buttonType) {
+    setState(() {
+      if (buttonType == 'play') {
+        _playButtonBorderColor = Color(0xFF72CB25);
+        _leadButtonBorderColor = Colors.black;
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => MainMenu()));
+      } else if (buttonType == 'lead') {
+        _leadButtonBorderColor = Color(0xFF72CB25);
+        _playButtonBorderColor = Colors.black;
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => LeaderboardScreen()));
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Center(child: Text('Drawiloo Challenge')),
-        backgroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfilePage()),
-              );
-            },
-          ),
-        ],
+      appBar: CustomAppBar(
+        goldCount: 12,
+        silverCount: 6,
+        purpleCount: 2,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Top Section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'April 21, Friday',
-                        style: TextStyle(fontSize: 14, color: Colors.black),
-                      ),
-                      Row(
-                        children: [
-                          Image.asset(
-                            'assets/image/1.png', // Path to your trophy image
-                            width: 24,
-                            height: 24,
-                            fit: BoxFit
-                                .contain, // Ensures the image fits properly
-                          ),
-                          SizedBox(width: 4),
-                          Text('12'),
-                          SizedBox(width: 8),
-                          Image.asset(
-                            'assets/image/2.png', // Path to your trophy image
-                            width: 24,
-                            height: 24,
-                            fit: BoxFit
-                                .contain, // Ensures the image fits properly
-                          ),
-                          SizedBox(width: 4),
-                          Text('6'),
-                          SizedBox(width: 8),
-                          Image.asset(
-                            'assets/image/3.png', // Path to your trophy image
-                            width: 24,
-                            height: 24,
-                            fit: BoxFit
-                                .contain, // Ensures the image fits properly
-                          ),
-                          SizedBox(width: 4),
-                          Text('2'),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Welcome Text Section
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Welcome to the game!\nChoose a mode and start\n skating.',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  TypingTextWidget(
+                    text:
+                        'Welcome to the game!\nChoose a mode and start\nskating.',
                   ),
                   Image.asset(
-                    'assets/image/triangle.png', // Path to your image
-                    width: 150, // Adjust the width
-                    height: 150, // Adjust the height
+                    'assets/image/triangle.png',
+                    width: 150,
+                    height: 150,
                   ),
                 ],
               ),
             ),
-            // Mode Buttons
-
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -148,9 +106,6 @@ class MainMenu extends StatelessWidget {
                     MultiplayerSelectionMode(), 'assets/image/cle.png'),
               ],
             ),
-
-            // Bottom Navigation
-
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -158,80 +113,54 @@ class MainMenu extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Container(
-                      padding:
-                          EdgeInsets.all(8), // Padding inside the container
+                      padding: EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey), // Blue border
-                        borderRadius:
-                            BorderRadius.circular(16), // Rounded corners
+                        border: Border.all(color: Colors.black),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min, // Wrap content size
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Colors.white, // White button background
+                              backgroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8), // Rounded button corners
+                                borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(
-                                    color: Colors
-                                        .transparent), // Transparent border
+                                    color: _playButtonBorderColor, width: 2),
                               ),
                               elevation: 2,
                               padding: EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
                             ),
-                            onPressed: () {
-                              // Play button action
-                            },
-                            icon: Image.asset(
-                              'assets/image/play.png', // Replace with your image path
-                              width: 24,
-                              height: 24,
-                              fit:
-                                  BoxFit.contain, // Ensures the image fits well
-                            ),
-                            label: Text(
-                              "Play",
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold),
-                            ),
+                            onPressed: () => _handleButtonPress('play'),
+                            icon: Image.asset('assets/image/play.png',
+                                width: 24, height: 24, fit: BoxFit.contain),
+                            label: Text("Play",
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold)),
                           ),
-
-                          SizedBox(width: 8), // Spacing between buttons
+                          SizedBox(width: 8),
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Colors.white, // White button background
+                              backgroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8), // Rounded button corners
+                                borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(
-                                    color: Colors.amber), // Amber border
+                                    color: _leadButtonBorderColor, width: 2),
                               ),
                               elevation: 2,
                               padding: EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
                             ),
-                            onPressed: () {
-                              // Lead button action
-                            },
-                            icon: Image.asset(
-                              'assets/image/cup.png', // Replace with your image path
-                              width: 24,
-                              height: 24,
-                              fit:
-                                  BoxFit.contain, // Ensures the image fits well
-                            ),
-                            label: Text(
-                              "Lead",
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold),
-                            ),
+                            onPressed: () => _handleButtonPress('lead'),
+                            icon: Image.asset('assets/image/cup.png',
+                                width: 24, height: 24, fit: BoxFit.contain),
+                            label: Text("Lead",
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold)),
                           ),
                         ],
                       ),
@@ -269,22 +198,11 @@ class MainMenu extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              imagePath,
-              width: 24, // Set the desired width
-              height: 24, // Set the desired height
-            ),
+            Image.asset(imagePath, width: 24, height: 24),
             SizedBox(width: 12),
-            Text(
-              title,
-              style: TextStyle(fontSize: 16, color: Colors.white),
-            ),
+            Text(title, style: TextStyle(fontSize: 16, color: Colors.white)),
             SizedBox(width: 12),
-            Image.asset(
-              imagePath,
-              width: 24, // Set the desired width
-              height: 24, // Set the desired height
-            ),
+            Image.asset(imagePath, width: 24, height: 24),
           ],
         ),
       ),

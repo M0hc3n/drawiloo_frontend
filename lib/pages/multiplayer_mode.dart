@@ -159,8 +159,18 @@ class _MultiplayerModeScreenState extends State<MultiplayerModeScreen> {
                   print('cannot start with a single drawer');
                 }
               },
-              child: Text('Start Game', style: TextStyle(fontSize: 20)),
-            ),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                backgroundColor: Color(0xFF7A1FA0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Start Game',
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            )
           ],
         )),
       );
