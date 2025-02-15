@@ -42,7 +42,7 @@ class _GameScreenState extends State<GameScreen> {
   final SupabaseClient supabase = Supabase.instance.client;
   bool _isEraser = false; // New state variable for eraser mode
 
-  Color _playButtonBorderColor = Colors.black; // Default border color
+  Color _playButtonBorderColor = Color(0xFF72CB25); // Default border color
   Color _leadButtonBorderColor = Colors.black;
 
   @override

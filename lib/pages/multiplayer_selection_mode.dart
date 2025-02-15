@@ -47,14 +47,28 @@ class MultiplayerSelectionMode extends StatelessWidget {
   Widget _buildMenuButton(BuildContext context, String title, Widget page) {
     return Padding(
       padding: const EdgeInsets.all(10.0),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => page),
-          );
-        },
-        child: Text(title, style: TextStyle(fontSize: 18)),
+      child: SizedBox(
+        height: 60,
+        width: 300,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+            backgroundColor: Color(0xFF7A1FA0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => page),
+            );
+          },
+          child: Text(
+            title,
+            style: TextStyle(fontSize: 16, color: Colors.white),
+          ),
+        ),
       ),
     );
   }
