@@ -17,29 +17,40 @@ class MultiplayerListGamesScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final room = items[index];
 
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            child: ListTile(
-              title: Text("Prompt: *************"),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+                color: Colors.purple[50],
+                borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Status: ${room['status']}"),
-                  Text("Drawer Points: ${room['drawer_points']}"),
-                  Text("Created At: ${room['created_at']}"),
-                ],
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LobbyScreen(
-                      availableRoom: room,
+                  Text('Room ${index + 1}', style: TextStyle(fontSize: 16)),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LobbyScreen(
+                            availableRoom: room,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple[700],
+                    ),
+                    child: const Text(
+                      'Join',
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                );
-              },
+                ],
+              ),
             ),
           );
         },
