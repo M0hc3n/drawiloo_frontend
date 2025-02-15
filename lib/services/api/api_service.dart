@@ -45,7 +45,7 @@ class ApiService {
     }
   }
 
-  static Future<int> getProficiencyPoint(int time, String confidence) async {
+  static Future<int> getProficiencyPoint(int time, String confidence, int currPoint) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/update_proficiency'),
@@ -55,6 +55,33 @@ class ApiService {
         body: jsonEncode({
           'time': time,
           'confidence': confidence,
+          'current_level': currPoint,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        return responseData['action'] as int;
+      } else {
+        throw Exception(
+            'Failed to get proficiency points: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error calculating proficiency points: $e');
+    }
+  }
+
+  static Future<int> getProficiencyPointForMulitPlayerSetting(int time, int currPoint) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/update_proficiency_for_multiplayer'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'time': time,
+          'currPoint': currPoint,
         }),
       );
 

@@ -1,8 +1,8 @@
 import 'package:drawiloo/pages/login_page.dart';
+import 'package:drawiloo/pages/multiplayer_selection_mode.dart';
 import 'package:drawiloo/pages/offline_mode.dart';
 import 'package:drawiloo/pages/online_mode.dart';
 import 'package:drawiloo/pages/profile_page.dart';
-import 'package:drawiloo/pages/room_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -62,7 +62,7 @@ class MainMenu extends StatelessWidget {
             _buildMenuButton(context, 'Offline Mode', OfflineMode()),
             _buildMenuButton(
                 context, 'Online Mode', OnlineModeMatchMakingScreen()),
-            _buildMenuButton(context, 'Room Mode', RoomMode()),
+            _buildMenuButton(context, 'Room Mode', MultiplyaerSelectionMode()),
           ],
         ),
       ),

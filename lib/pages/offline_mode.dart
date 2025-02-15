@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:drawiloo/services/api/api_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:html' as html;
 
 class OfflineMode extends StatefulWidget {
   const OfflineMode({super.key});
@@ -29,9 +28,11 @@ class _OfflineModeState extends State<OfflineMode> {
   bool _isSending = false;
   String? _lastPrediction;
   String? _confidence;
+  int currPoints = 0;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
   String recommendedLabel = '';
+  final SupabaseClient supabase = Supabase.instance.client;
 
   @override
   void initState() {
@@ -39,12 +40,33 @@ class _OfflineModeState extends State<OfflineMode> {
     _startPeriodicCapture();
     startTimer();
     fetchLabel();
+
+    fetchUserPoints();
   }
 
   @override
   void dispose() {
     _captureTimer?.cancel();
     super.dispose();
+  }
+
+  void fetchUserPoints() async {
+    final user = supabase.auth.currentUser;
+    final userProfile = await supabase
+        .from('user_info')
+        .select('points')
+        .eq('user_id', user?.id as String)
+        .select('*')
+        .single();
+
+    if (userProfile.isEmpty) {
+      return;
+    }
+    int userPoints = userProfile['points'] as int;
+
+    setState(() {
+      currPoints = userPoints;
+    });
   }
 
   void _startPeriodicCapture() {
@@ -119,9 +141,12 @@ class _OfflineModeState extends State<OfflineMode> {
 
   Future<void> updateProficiency() async {
     final proficiencyResponse = await ApiService.getProficiencyPoint(
-        _elapsedSeconds, _confidence ?? "0.5");
+      _elapsedSeconds,
+      _confidence ?? "0.5",
+      currPoints,
+    );
 
-    final response = await Supabase.instance.client.from('user_info').update({
+    await Supabase.instance.client.from('user_info').update({
       'points': proficiencyResponse,
     }).eq('user_id', Supabase.instance.client.auth.currentUser?.id as Object);
   }
@@ -172,7 +197,6 @@ class _OfflineModeState extends State<OfflineMode> {
 
   @override
   Widget build(BuildContext context) {
-    print(drawingPoints.toString());
     return Scaffold(
       appBar: AppBar(
         title: GameTimer(
@@ -349,6 +373,11 @@ class DrawingPoint {
   Paint paint;
 
   DrawingPoint(this.offset, this.paint);
+
+  @override
+  String toString() {
+    return '$offset,$paint';
+  }
 }
 
 class _DrawingPainter extends CustomPainter {

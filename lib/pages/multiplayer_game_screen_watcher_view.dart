@@ -1,7 +1,6 @@
-import 'dart:typed_data';
+import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:drawiloo/pages/profile_page.dart';
-import 'package:drawiloo/services/capture_canvas.dart';
 import 'package:drawiloo/widgets/dialogs/game_dialog.dart';
 import 'package:drawiloo/widgets/game/timer.dart';
 import 'package:flutter/material.dart';
@@ -9,52 +8,48 @@ import 'dart:async';
 import 'package:drawiloo/services/api/api_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class GameScreen extends StatefulWidget {
+class MultiplayerGameScreenWatcherView extends StatefulWidget {
   final int gameId;
-  final String opponentId;
   final String prompt;
 
-  const GameScreen({
+  const MultiplayerGameScreenWatcherView({
     required this.gameId,
-    required this.opponentId,
     required this.prompt,
     Key? key,
   }) : super(key: key);
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
+  State<MultiplayerGameScreenWatcherView> createState() =>
+      _MultiplayerGameScreenWatcherViewState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _MultiplayerGameScreenWatcherViewState
+    extends State<MultiplayerGameScreenWatcherView> {
   List<DrawingPoint?> drawingPoints = [];
   Color selectedColor = Colors.black;
   final GlobalKey canvasKey = GlobalKey();
   double strokeWidth = 5;
-  String prompt = "Draw a cat"; // This will come from database
   int timeLeft = 60; // 60 seconds timer
   Timer? _captureTimer;
-  bool _isSending = false;
-  String? _lastPrediction;
   int currPoints = 0;
-  String? _confidence;
+  bool _isSending = false;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
-  String? _winnerId;
   final SupabaseClient supabase = Supabase.instance.client;
+  StreamSubscription? watcherGameStream;
+  late TextEditingController _promptController;
 
   @override
   void initState() {
     super.initState();
-    _startPeriodicCapture();
     startTimer();
 
-    fetchUserPoints();
-  }
+    _startPeriodicCapture();
 
-  @override
-  void dispose() {
-    _captureTimer?.cancel();
-    super.dispose();
+    watchDrawer();
+    _promptController = TextEditingController(text: '');
+
+    fetchUserPoints();
   }
 
   void fetchUserPoints() async {
@@ -76,11 +71,60 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _captureTimer?.cancel();
+    watcherGameStream?.cancel();
+
+    _promptController.dispose();
+
+    super.dispose();
+  }
+
   void _startPeriodicCapture() {
     _captureTimer = Timer.periodic(
       const Duration(seconds: 5),
       (timer) => _captureAndProcessCanvas(),
     );
+  }
+
+  void watchDrawer() {
+    watcherGameStream = supabase
+        .from('multiplayer_game')
+        .stream(primaryKey: ['id'])
+        .eq('id', widget.gameId)
+        .listen((data) {
+          setState(() {
+            if (data[0]['drawing_points'] == null) return;
+
+            List<dynamic> pointsJson = data[0]['drawing_points'];
+
+            drawingPoints = pointsJson.map((point) {
+              return DrawingPoint(
+                Offset(point['x'], point['y']),
+                Paint()
+                  ..color = selectedColor
+                  ..isAntiAlias = true
+                  ..strokeWidth = strokeWidth
+                  ..strokeCap = StrokeCap.round,
+              );
+            }).toList();
+          });
+        });
+  }
+
+  Future<void> _broadcastDrawing() async {
+    List<Map<String, dynamic>> serializedPoints = drawingPoints
+        .where((point) => point != null)
+        .map((point) => {
+              'x': point!.offset.dx,
+              'y': point.offset.dy,
+            })
+        .toList();
+
+    await supabase.from('multiplayer_game').update({
+      'drawing_points': jsonEncode(serializedPoints),
+    }).eq('id', widget.gameId);
   }
 
   Future<void> _captureAndProcessCanvas() async {
@@ -91,16 +135,7 @@ class _GameScreenState extends State<GameScreen> {
     });
 
     try {
-      ui.Image? image = await CanvasCapture.captureCanvas(canvasKey);
-
-      if (image != null) {
-        ByteData? byteData = await CanvasCapture.imageToByteData(image);
-
-        if (byteData != null) {
-          List<int> pngBytes = byteData.buffer.asUint8List();
-          await _sendDrawingToApi(pngBytes);
-        }
-      }
+      await _broadcastDrawing();
     } catch (e) {
       _showError('Failed to process drawing: $e');
     } finally {
@@ -110,35 +145,10 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
-  Future<void> _sendDrawingToApi(List<int> imageBytes) async {
-    if (_gameEnded) return;
-
-    try {
-      final response = await ApiService.sendDrawing(imageBytes, widget.prompt);
-      setState(() {
-        _lastPrediction = response['correct_label'];
-        _confidence = response['confidence'];
-      });
-
-      // Assuming API returns something like {'success': true, 'confidence': 0.95, correct_label}
-      bool isCorrect = response['success'] == true;
-
-      if (isCorrect) {
-        setState(() {
-          _gameEnded = true;
-        });
-        await updateProficiency();
-        await _handleGameEnd();
-      }
-    } catch (e) {
-      _showError('Error sending to API: $e');
-    }
-  }
-
   Future<void> updateProficiency() async {
-    final proficiencyResponse = await ApiService.getProficiencyPoint(
+    final proficiencyResponse =
+        await ApiService.getProficiencyPointForMulitPlayerSetting(
       _elapsedSeconds,
-      _confidence ?? "0.5",
       currPoints,
     );
 
@@ -147,38 +157,9 @@ class _GameScreenState extends State<GameScreen> {
     }).eq('user_id', Supabase.instance.client.auth.currentUser?.id as Object);
   }
 
-  Future<void> _handleGameEnd() async {
-    final user = supabase.auth.currentUser;
-    final response = await supabase
-        .from('matchmaking')
-        .select('winner_id')
-        .eq('id', widget.gameId)
-        .single();
-
-    if (response.isNotEmpty && response['winner_id'] != null) {
-      setState(() {
-        _winnerId = response['winner_id'];
-        _gameEnded = true;
-      });
-      if (_winnerId == Supabase.instance.client.auth.currentUser?.id) {
-        await _handleSuccess();
-      } else {
-        await _handleLostGame();
-      }
-    } else {
-      await supabase
-          .from('matchmaking')
-          .update({'winner_id': user?.id}).eq('id', widget.gameId);
-
-      setState(() {
-        _gameEnded = true;
-        _winnerId = user?.id;
-      });
-      await _handleSuccess();
-    }
-  }
-
   Future<void> _handleSuccess() async {
+    await updateProficiency();
+
     // Cancel the capture timer since game is over
     _captureTimer?.cancel();
 
@@ -199,17 +180,6 @@ class _GameScreenState extends State<GameScreen> {
     _captureTimer?.cancel();
 
     await GameDialogs.showTimeOutDialog(context);
-  }
-
-  Future<void> _handleLostGame() async {
-    setState(() {
-      _gameEnded = true;
-    });
-
-    // Cancel the capture timer
-    _captureTimer?.cancel();
-
-    await GameDialogs.showLostDialog(context);
   }
 
   void _showError(String message) {
@@ -274,39 +244,6 @@ class _GameScreenState extends State<GameScreen> {
           RepaintBoundary(
             key: canvasKey,
             child: GestureDetector(
-              onPanStart: (details) {
-                setState(() {
-                  drawingPoints.add(
-                    DrawingPoint(
-                      details.localPosition,
-                      Paint()
-                        ..color = selectedColor
-                        ..isAntiAlias = true
-                        ..strokeWidth = strokeWidth
-                        ..strokeCap = StrokeCap.round,
-                    ),
-                  );
-                });
-              },
-              onPanUpdate: (details) {
-                setState(() {
-                  drawingPoints.add(
-                    DrawingPoint(
-                      details.localPosition,
-                      Paint()
-                        ..color = selectedColor
-                        ..isAntiAlias = true
-                        ..strokeWidth = strokeWidth
-                        ..strokeCap = StrokeCap.round,
-                    ),
-                  );
-                });
-              },
-              onPanEnd: (details) {
-                setState(() {
-                  drawingPoints.add(null);
-                });
-              },
               child: CustomPaint(
                 painter: _DrawingPainter(drawingPoints),
                 child: Container(
@@ -316,26 +253,26 @@ class _GameScreenState extends State<GameScreen> {
               ),
             ),
           ),
-          Positioned(
-            top: 20,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Draw a ${widget.prompt}',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+          TextField(
+            controller: _promptController,
+            decoration: const InputDecoration(
+              hintText: 'Enter prompt',
             ),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+            onChanged: (value) {
+              setState(() {
+                // Update the prompt value if needed
+
+                if (value.trim().toLowerCase() ==
+                    widget.prompt.trim().toLowerCase()) {
+                  _handleSuccess();
+                }
+              });
+            },
           ),
         ],
       ),
@@ -357,17 +294,6 @@ class _GameScreenState extends State<GameScreen> {
               ],
             ),
           ),
-          if (_lastPrediction != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Model thinks it\'s: $_lastPrediction',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
         ],
       ),
     );
