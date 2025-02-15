@@ -21,7 +21,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
-    return user == null ? LoginPage() : AnimatedSplashScreen();
+    return user == null ? LoginPage() : MainMenu();
   }
 }
 
@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LoginPage(),
+      home: MainMenu(),
     );
   }
 }

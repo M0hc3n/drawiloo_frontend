@@ -301,7 +301,7 @@ class _OfflineModeState extends State<OfflineMode> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'I guess its a \n pen.',
+                      'I guess its a \n ${_lastPrediction ?? '...'}.',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
@@ -447,17 +447,6 @@ class _OfflineModeState extends State<OfflineMode> {
               ],
             ),
           ),
-          if (_lastPrediction != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Model thinks it\'s: $_lastPrediction',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
         ],
       ),
     );
