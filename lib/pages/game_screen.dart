@@ -35,7 +35,6 @@ class _GameScreenState extends State<GameScreen> {
   Timer? _captureTimer;
   bool _isSending = false;
   String? _lastPrediction;
-  int currPoints = 0;
   String? _confidence;
   int _elapsedSeconds = 0;
   bool _gameEnded = false;
@@ -47,33 +46,12 @@ class _GameScreenState extends State<GameScreen> {
     super.initState();
     _startPeriodicCapture();
     startTimer();
-
-    fetchUserPoints();
   }
 
   @override
   void dispose() {
     _captureTimer?.cancel();
     super.dispose();
-  }
-
-  void fetchUserPoints() async {
-    final user = supabase.auth.currentUser;
-    final userProfile = await supabase
-        .from('user_info')
-        .select('points')
-        .eq('user_id', user?.id as String)
-        .select('*')
-        .single();
-
-    if (userProfile.isEmpty) {
-      return;
-    }
-    int userPoints = userProfile['points'] as int;
-
-    setState(() {
-      currPoints = userPoints;
-    });
   }
 
   void _startPeriodicCapture() {
@@ -137,12 +115,9 @@ class _GameScreenState extends State<GameScreen> {
 
   Future<void> updateProficiency() async {
     final proficiencyResponse = await ApiService.getProficiencyPoint(
-      _elapsedSeconds,
-      _confidence ?? "0.5",
-      currPoints,
-    );
+        _elapsedSeconds, _confidence ?? "0.5");
 
-    await Supabase.instance.client.from('user_info').update({
+    final response = await Supabase.instance.client.from('user_info').update({
       'points': proficiencyResponse,
     }).eq('user_id', Supabase.instance.client.auth.currentUser?.id as Object);
   }

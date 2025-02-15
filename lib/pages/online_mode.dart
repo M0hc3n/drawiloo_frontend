@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:drawiloo/pages/game_screen.dart';
-import 'package:drawiloo/services/api/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:math';
 
 class OnlineModeMatchMakingScreen extends StatefulWidget {
   @override
@@ -16,6 +16,15 @@ class _OnlineModeMatchMakingScreenState
   String status = "Looking for an opponent...";
   final SupabaseClient supabase = Supabase.instance.client;
   StreamSubscription? matchSubscription;
+  final List<String> drawingPrompts = [
+    "Tree",
+    "Car",
+    "House",
+    "Dog",
+    "Cat",
+    "Sun",
+    "Boat"
+  ];
 
   @override
   void initState() {
@@ -57,14 +66,16 @@ class _OnlineModeMatchMakingScreenState
         .maybeSingle();
 
     if (availableMatch != null && availableMatch.isNotEmpty) {
-      String randomPrompt = await ApiService.fetchRecommendedLabel();
-
-      await supabase.from('matchmaking').update({
+      String randomPrompt =
+          drawingPrompts[Random().nextInt(drawingPrompts.length)];
+      final res = await supabase.from('matchmaking').update({
         'opponent_id': user?.id,
         'opponent_points': userPoints,
         'prompt': randomPrompt
       }).eq('id', availableMatch['id']);
 
+      print(res);
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -87,6 +98,8 @@ class _OnlineModeMatchMakingScreenState
           })
           .select('id')
           .single();
+
+      print(scdRes);
 
       matchSubscription = supabase
           .from('matchmaking')
