@@ -56,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               // Pixel Art Icon at the Top
               Align(
-                alignment: Alignment.topRight,
+                alignment: Alignment.topCenter,
                 child: Image.asset(
                   'assets/image/triangle.png', // Replace with the correct path
                   height: 200,
@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
 
               // "Loging" Title
               Text(
-                "Loging",
+                "Login",
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
