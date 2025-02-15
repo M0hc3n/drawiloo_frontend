@@ -4,6 +4,7 @@ import 'package:drawiloo/pages/offline_mode.dart';
 import 'package:drawiloo/pages/online_mode.dart';
 import 'package:drawiloo/pages/profile_page.dart';
 import 'package:drawiloo/pages/room_mode.dart';
+import 'package:drawiloo/pages/splashScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -28,7 +29,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
-    return  OfflineMode();
+    return  AnimatedSplashScreen();
   }
 }
 
