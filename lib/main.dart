@@ -10,16 +10,17 @@ import 'package:drawiloo/widgets/top_bar/Custom_appbar.dart';
 import 'package:drawiloo/widgets/typing_text_wighet/TypingTextWidget%20.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load();
   // P.S: ik this is super bad, but I did it on a rush
   // please note that no sensitive data was stored under those creds, and this project
   // will be automatically deleted after the hackathon by 1 or 2 days at max.
   await Supabase.initialize(
-    url: 'https://kmnrtirsjumujwebkiun.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImttbnJ0aXJzanVtdWp3ZWJraXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk0ODI0NzcsImV4cCI6MjA1NTA1ODQ3N30.jqilgY9Uxzq2e5mjl9z-afUZDnma7Z0egvxTwhOuimU',
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
   runApp(MyApp());
 }
